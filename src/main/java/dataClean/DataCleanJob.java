@@ -1,5 +1,13 @@
 package dataClean;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
 /*
  * 數據清洗作業
  * 需求:
@@ -18,5 +26,49 @@ package dataClean;
  *      k2, v2的數據類型為: <Text,Text> k2存儲主播ID, v2存儲核心欄位，多個欄位中間用\t分割
  * */
 public class DataCleanJob {
+    public static void main(String[] args) throws Exception {
+        /**
+        if (args.length != 2) {
+            System.exit(100);
+        }
+         */
+        // Job需要配置的參數
+        Configuration configuration = new Configuration();
+        // 創建一個Job
+        Job job = Job.getInstance(configuration);
+        job.setJarByClass(DataCleanJob.class);
 
+        // 指定輸入的路徑(可以是文件，也可以是目錄)
+        FileInputFormat.setInputPaths(job, new Path(args[0]));
+        Path outputPath = new Path(args[1]);
+        FileSystem fs = FileSystem.get(configuration);
+        if (fs.exists(outputPath)) {
+            fs.delete(outputPath, true);
+        }
+        //指定輸出路徑(只能指定一個不存在的目錄)
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        //指定Map相關程式碼
+        job.setMapperClass(DataCleanMapper.class);
+        //指定k2的類型
+        job.setMapOutputKeyClass(Text.class);
+        //指定v2的類型
+        job.setMapOutputValueClass(Text.class);
+
+        //禁用reduce
+        job.setNumReduceTasks(0);
+
+//        FileInputFormat.setInputPaths(job, new Path("video/input/video.log"));
+//        Path outputPath = new Path("video/etl");
+//        FileInputFormat.setInputPaths(job, new Path(args[0]));
+//        Path outputPath = new Path(args[1]);
+//        FileSystem fs = FileSystem.get(configuration);
+//        if (fs.exists(outputPath)) {
+//            fs.delete(outputPath, true);
+//        }
+//        FileOutputFormat.setOutputPath(job, outputPath);
+
+        boolean result = job.waitForCompletion(true);
+        System.out.println("result: " + result);
+    }
 }

@@ -1,0 +1,35 @@
+#安裝
+1. wget http://ftp.tc.edu.tw/pub/Apache/sqoop/1.4.7/sqoop-1.4.7.bin__hadoop-2.6.0.tar.gz
+2. 解壓tar -zxvf sqoop-1.4.7.bin__hadoop-2.6.0.tar.gz sqoop-1.4.7.bin__hadoop-2.6.0/
+3. 重新命名${SQOOP_HOME}/conf/sqoop-env-template.sh 為 sqoop-env.sh
+4. 只要/etc/profile中配置的有HADOOP_HOME, Sqoop就可以找到hadoop
+5. 建議配置SQOOP的環境變量
+    vi /etc/profile
+    export SQOOP_HOME=/root/sqoop-1.4.7.bin__hadoop-2.6.0
+    在PATH環境變量中增加SQOOP_HOME/bin
+6. 增加mysql驅動jar，新增到SQOOP_HOME的lib資料夾下
+    mysql-connector-java-8.0.19.jar
+7. 開放mysql遠程訪問權限[開放權限以後集群中的機器才可以連接windows上的mysql服務]
+    USE mysql;
+    CREATE USER 'root'@'%' IDENTIFIED BY 'root'
+    GRANT ALL ON *.* TO 'root'@'%';
+    ALTER USER 'root'@'%' IDENTIFIED WITH _native_password BY 'root';
+    FLUSH PRIVILEGES;
+8. 注意: 使用hadoop-3.2版本的時候，需要在SQOOP_HOME的lib目錄下增加common-lang.jar
+    commons-lang-2.6.jar
+9. 在mysql中創建資料庫，名稱為data，創建表為top10
+    CREATE DATABASE data DEFAULT CHARACTER SET = utf8 DEFAULT COLLATE = utf8_general_ci;
+    USE data;
+    CREATE TABLE top10 (
+        dt date,
+        uid varchar(255),
+        length bigint(20)
+    );
+10. 使用 sqoop將hdfs中指定目錄的數據導出到mysql表中
+sqoop export \
+--connect jdbc:mysql://192.168.5.1:3306/data?serverTimezone=UTC \
+--username root \
+--password root \
+--table top10 \
+--export-dir /res/top10/20200404 \
+--input-fields-terminated-by "\t"
